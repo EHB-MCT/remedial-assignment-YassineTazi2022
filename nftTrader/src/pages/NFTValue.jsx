@@ -1,18 +1,58 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { sampleNfts, getNftById } from '../data/nfts.js';
+import { fetchNftById } from '../services/nftService.js';
 import { useEconomy } from '../context/EconomyContext.jsx';
 
 export default function NFTValue() {
   const { nftId } = useParams();
-  const nft = useMemo(() => getNftById(nftId), [nftId]);
   const { percentage, computePriceFromBase } = useEconomy();
+
+  const [nft, setNft] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      try {
+        setLoading(true);
+        const data = await fetchNftById(nftId);
+        if (isMounted) setNft(data);
+      } catch (err) {
+        if (isMounted) setError(err.message || 'Failed to load NFT');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, [nftId]);
+
+  if (loading) {
+    return (
+      <div className="container">
+        <Link to="/" className="button button--link">← Back</Link>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container">
+        <Link to="/" className="button button--link">← Back</Link>
+        <p style={{ color: 'crimson' }}>{error}</p>
+      </div>
+    );
+  }
 
   if (!nft) {
     return (
       <div className="container">
+        <Link to="/" className="button button--link">← Back</Link>
         <p>NFT not found.</p>
-        <Link to="/" className="button">Back</Link>
       </div>
     );
   }
