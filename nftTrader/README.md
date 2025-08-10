@@ -1,12 +1,37 @@
-# React + Vite
+# NFT Trading Game (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple NFT trading game scaffold. The economy changes every minute by a random percentage between -10% and 10%, which affects NFT prices derived from their base euro value.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Install dependencies:
 
-## Expanding the ESLint configuration
+```
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. (Optional) Configure Supabase for persistence:
+   - Copy `env.example` to `.env` (or `.env.local`) and fill values:
+     - `VITE_SUPABASE_URL=...`
+     - `VITE_SUPABASE_ANON_KEY=...`
+   - If not set, the app will run without Supabase.
+
+## Scripts
+
+- `npm run dev`: start dev server
+- `npm run build`: build for production
+- `npm run preview`: preview production build
+
+## Project Structure
+
+- `src/context/EconomyContext.jsx`: economy simulation (cumulative random ±10% every minute)
+- `src/pages/Home.jsx`: lists sample NFTs
+- `src/pages/NFTValue.jsx`: shows live price for an NFT
+- `src/data/nfts.js`: sample NFTs and helpers
+- `src/lib/supabaseClient.js`: Supabase client (if env vars provided)
+
+## Notes
+
+- CSS uses standard CSS in `src/App.css`.
+- Routing via `react-router-dom`.
+- Extend `sampleNfts` and replace with Supabase-backed data later.
