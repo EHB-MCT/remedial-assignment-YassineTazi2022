@@ -41,6 +41,12 @@ main {
   padding: 1rem;
 }
 
+input[type="email"],
+input[type="password"] {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
 .button {
   display: inline-block;
   padding: 0.5rem 0.75rem;
