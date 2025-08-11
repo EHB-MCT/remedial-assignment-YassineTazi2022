@@ -1,6 +1,6 @@
 # NFT Trading Game (React + Vite)
 
-A simple NFT trading game scaffold. The economy changes every minute by a random percentage between -10% and 10%, which affects NFT prices derived from their base euro value.
+A simple NFT trading game scaffold. The economy changes every 10 seconds by a random percentage between -10% and 10%, which affects NFT prices derived from their base euro value.
 
 ## Setup
 
@@ -10,17 +10,15 @@ A simple NFT trading game scaffold. The economy changes every minute by a random
 npm install
 ```
 
-2. (Optional) Configure Supabase for persistence:
+2. Configure Supabase for persistence:
    - Copy `env.example` to `.env` (or `.env.local`) and fill values:
      - `VITE_SUPABASE_URL=...`
      - `VITE_SUPABASE_ANON_KEY=...`
-   - If not set, the app will run without Supabase.
 
 ## Scripts
 
 - `npm run dev`: start dev server
 - `npm run build`: build for production
-- `npm run preview`: preview production build
 
 ## Project Structure
 

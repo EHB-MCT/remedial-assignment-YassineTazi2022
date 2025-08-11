@@ -23,7 +23,7 @@ export function EconomyProvider({ children }) {
     // Start ticking every minute
     intervalRef.current = setInterval(() => {
       tick();
-    }, 1000);
+    }, 10000);
 
     return () => {
       if (intervalRef.current) {

@@ -66,3 +66,18 @@ h1 {
   text-align: center;
   margin-top: 2rem;
 }
+
+/* Trend indicators */
+.trend {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-weight: 700;
+}
+
+.trend--up {
+  color: #138a36; /* green */
+}
+
+.trend--down {
+  color: #cc2936; /* red */
+}
