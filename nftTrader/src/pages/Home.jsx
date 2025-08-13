@@ -4,6 +4,7 @@ import { fetchNfts } from '../services/nftService.js';
 import { buyNft } from '../services/nftService.js';
 import { fetchMyPurchasedNftIds } from '../services/nftService.js';
 import { useEconomy } from '../context/EconomyContext.jsx';
+import { useWallet } from '../context/WalletContext.jsx';
 
 export default function Home() {
   const [nfts, setNfts] = useState([]);
@@ -13,6 +14,7 @@ export default function Home() {
   const [buyingId, setBuyingId] = useState(null);
   const [buyStatusById, setBuyStatusById] = useState({});
   const [ownedIds, setOwnedIds] = useState(new Set());
+  const { refreshBalance } = useWallet();
 
   useEffect(() => {
     let isMounted = true;
@@ -89,6 +91,7 @@ export default function Home() {
                           await buyNft(nft.id, priceNow, { basePriceEur: nft.basePrice });
                           setBuyStatusById((prev) => ({ ...prev, [nft.id]: 'Purchase successful.' }));
                           setOwnedIds((prev) => new Set([...prev, nft.id]));
+                          await refreshBalance();
                         } catch (e) {
                           setBuyStatusById((prev) => ({ ...prev, [nft.id]: e.message || 'Purchase failed' }));
                         } finally {

@@ -45,6 +45,7 @@ export function EconomyProvider({ children }) {
   return <EconomyContext.Provider value={value}>{children}</EconomyContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useEconomy() {
   return useContext(EconomyContext);
 }
