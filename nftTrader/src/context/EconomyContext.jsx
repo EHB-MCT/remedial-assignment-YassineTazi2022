@@ -1,46 +1,109 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+
+const MAX_HISTORY_POINTS = 60; // last 60 ticks
 
 const EconomyContext = createContext({
-  percentage: 0,
-  tick: () => {},
-  computePriceFromBase: (base) => base,
+  getPercentage: () => 0,
+  ensureTracked: () => {},
+  computePrice: () => 0,
+  getHistory: () => [],
 });
 
 export function EconomyProvider({ children }) {
-  const [percentage, setPercentage] = useState(0);
   const intervalRef = useRef(null);
+  const [percentById, setPercentById] = useState({}); // { [nftId]: number }
+  const [baseById, setBaseById] = useState({}); // { [nftId]: number }
+  const [historyById, setHistoryById] = useState({}); // { [nftId]: Array<{t:number, price:number}> }
 
   const randomDelta = () => {
     const delta = Math.random() * 20 - 10; // [-10, 10)
     return parseFloat(delta.toFixed(2));
   };
 
-  const tick = () => {
-    setPercentage((prev) => parseFloat((prev + randomDelta()).toFixed(2)));
-  };
+  const ensureTracked = useCallback((nftId, basePrice) => {
+    if (!nftId) return;
+    setBaseById((prev) => {
+      if (prev[nftId] != null) return prev;
+      const next = { ...prev, [nftId]: Number(basePrice) };
+      return next;
+    });
+    setPercentById((prev) => {
+      if (prev[nftId] != null) return prev;
+      const next = { ...prev, [nftId]: 0 };
+      return next;
+    });
+    setHistoryById((prev) => {
+      if (prev[nftId]) return prev;
+      const base = Number(basePrice) || 0;
+      const price = parseFloat(base.toFixed(2));
+      const now = Date.now();
+      const next = { ...prev, [nftId]: [{ t: now, price }] };
+      return next;
+    });
+  }, []);
+
+  const computePrice = useCallback((nftId, basePrice) => {
+    const pct = percentById[nftId] || 0;
+    const base = Number(basePrice) || 0;
+    const price = base * (1 + pct / 100);
+    return parseFloat(price.toFixed(2));
+  }, [percentById]);
+
+  const getPercentage = useCallback((nftId) => {
+    return percentById[nftId] || 0;
+  }, [percentById]);
+
+  const getHistory = useCallback((nftId) => {
+    return historyById[nftId] || [];
+  }, [historyById]);
+
+  const tick = useCallback(() => {
+    setPercentById((prevPct) => {
+      const ids = Object.keys(baseById);
+      if (ids.length === 0) return prevPct;
+      const nextPct = { ...prevPct };
+      const now = Date.now();
+      const updates = {};
+      for (const id of ids) {
+        const current = prevPct[id] || 0;
+        const updated = parseFloat((current + randomDelta()).toFixed(2));
+        nextPct[id] = updated;
+        const base = Number(baseById[id]) || 0;
+        const price = parseFloat((base * (1 + updated / 100)).toFixed(2));
+        updates[id] = { t: now, price };
+      }
+      setHistoryById((prevHist) => {
+        const nextHist = { ...prevHist };
+        for (const id of Object.keys(updates)) {
+          const arr = nextHist[id] ? [...nextHist[id]] : [];
+          arr.push(updates[id]);
+          while (arr.length > MAX_HISTORY_POINTS) arr.shift();
+          nextHist[id] = arr;
+        }
+        return nextHist;
+      });
+      return nextPct;
+    });
+  }, [baseById]);
 
   useEffect(() => {
-    // Start ticking every minute
     intervalRef.current = setInterval(() => {
       tick();
     }, 10000);
-
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, []);
+  }, [tick]);
 
-  const computePriceFromBase = useMemo(() => {
-    return (basePrice) => {
-      const price = Number(basePrice) * (1 + percentage / 100);
-      return parseFloat(price.toFixed(2));
-    };
-  }, [percentage]);
-
-  const value = useMemo(() => ({ percentage, tick, computePriceFromBase }), [percentage]);
+  const value = useMemo(() => ({
+    getPercentage,
+    ensureTracked,
+    computePrice,
+    getHistory,
+  }), [getPercentage, ensureTracked, computePrice, getHistory]);
 
   return <EconomyContext.Provider value={value}>{children}</EconomyContext.Provider>;
 }
