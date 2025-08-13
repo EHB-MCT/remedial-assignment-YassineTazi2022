@@ -8,7 +8,7 @@ export default function MyNFTs() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { computePriceFromBase } = useEconomy();
+  const { ensureTracked, computePrice } = useEconomy();
   const { refreshBalance } = useWallet();
   const [sellingId, setSellingId] = useState(null);
   const [sellStatusById, setSellStatusById] = useState({});
@@ -18,8 +18,13 @@ export default function MyNFTs() {
     async function load() {
       try {
         setLoading(true);
-        const data = await fetchMyPurchases();
+         const data = await fetchMyPurchases();
         if (isMounted) setPurchases(data);
+         // Ensure each purchase's NFT is tracked
+         data.forEach((p) => {
+           const base = p.nft?.basePrice ?? p.basePriceAtPurchase ?? 0;
+           if (p.nftId != null) ensureTracked(p.nftId, base);
+         });
       } catch (err) {
         if (isMounted) setError(err.message || 'Failed to load your NFTs');
       } finally {
@@ -57,7 +62,7 @@ export default function MyNFTs() {
         <div className="grid">
           {purchases.map((p) => {
             const base = p.nft?.basePrice ?? p.basePriceAtPurchase ?? 0;
-            const currentPrice = base ? computePriceFromBase(base) : null;
+            const currentPrice = base ? computePrice(p.nftId, base) : null;
             const isUp = currentPrice != null && p.basePriceAtPurchase != null && currentPrice > p.basePriceAtPurchase;
             const isDown = currentPrice != null && p.basePriceAtPurchase != null && currentPrice < p.basePriceAtPurchase;
             const arrow = isUp ? '▲' : isDown ? '▼' : '—';

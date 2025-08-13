@@ -10,7 +10,7 @@ export default function Home() {
   const [nfts, setNfts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { computePriceFromBase } = useEconomy();
+  const { ensureTracked, computePrice, getPercentage } = useEconomy();
   const [buyingId, setBuyingId] = useState(null);
   const [buyStatusById, setBuyStatusById] = useState({});
   const [ownedIds, setOwnedIds] = useState(new Set());
@@ -23,6 +23,8 @@ export default function Home() {
         setLoading(true);
         const data = await fetchNfts();
         if (isMounted) setNfts(data);
+        // Ensure each NFT is tracked for per-NFT economy
+        data.forEach((n) => ensureTracked(n.id, n.basePrice));
         try {
           const ids = await fetchMyPurchasedNftIds();
           if (isMounted) setOwnedIds(ids);
@@ -68,9 +70,10 @@ export default function Home() {
             <h3>{nft.name}</h3>
             <p>Base price: € {nft.basePrice.toFixed(2)}</p>
             {(() => {
-              const currentPrice = computePriceFromBase(nft.basePrice);
-              const isUp = currentPrice > nft.basePrice;
-              const isDown = currentPrice < nft.basePrice;
+              const currentPrice = computePrice(nft.id, nft.basePrice);
+              const pct = getPercentage(nft.id);
+              const isUp = pct > 0 && currentPrice > nft.basePrice;
+              const isDown = pct < 0 && currentPrice < nft.basePrice;
               const arrow = isUp ? '▲' : isDown ? '▼' : '—';
               const trendClass = isUp ? 'trend trend--up' : isDown ? 'trend trend--down' : 'trend';
               return (
@@ -87,7 +90,7 @@ export default function Home() {
                         setBuyStatusById((prev) => ({ ...prev, [nft.id]: '' }));
                         setBuyingId(nft.id);
                         try {
-                          const priceNow = computePriceFromBase(nft.basePrice);
+                          const priceNow = computePrice(nft.id, nft.basePrice);
                           await buyNft(nft.id, priceNow, { basePriceEur: nft.basePrice });
                           setBuyStatusById((prev) => ({ ...prev, [nft.id]: 'Purchase successful.' }));
                           setOwnedIds((prev) => new Set([...prev, nft.id]));
