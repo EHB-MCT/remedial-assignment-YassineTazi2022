@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { RandomWalkStrategy } from '../lib/economyStrategies.js';
+import { computePrice as computePriceUtil } from '../lib/pricing.js';
 
 const MAX_HISTORY_POINTS = 60; // last 60 ticks
 
@@ -14,11 +16,10 @@ export function EconomyProvider({ children }) {
   const [percentById, setPercentById] = useState({}); // { [nftId]: number }
   const [baseById, setBaseById] = useState({}); // { [nftId]: number }
   const [historyById, setHistoryById] = useState({}); // { [nftId]: Array<{t:number, price:number}> }
-
-  const randomDelta = () => {
-    const delta = Math.random() * 20 - 10; // [-10, 10)
-    return parseFloat(delta.toFixed(2));
-  };
+  const strategyRef = useRef(new RandomWalkStrategy());
+  const nextDelta = useCallback((previousPercent) => {
+    return strategyRef.current.nextDelta(previousPercent);
+  }, []);
 
   const ensureTracked = useCallback((nftId, basePrice) => {
     if (!nftId) return;
@@ -44,9 +45,7 @@ export function EconomyProvider({ children }) {
 
   const computePrice = useCallback((nftId, basePrice) => {
     const pct = percentById[nftId] || 0;
-    const base = Number(basePrice) || 0;
-    const price = base * (1 + pct / 100);
-    return parseFloat(price.toFixed(2));
+    return computePriceUtil(basePrice, pct);
   }, [percentById]);
 
   const getPercentage = useCallback((nftId) => {
@@ -66,10 +65,10 @@ export function EconomyProvider({ children }) {
       const updates = {};
       for (const id of ids) {
         const current = prevPct[id] || 0;
-        const updated = parseFloat((current + randomDelta()).toFixed(2));
+        const updated = parseFloat((current + nextDelta(current)).toFixed(2));
         nextPct[id] = updated;
         const base = Number(baseById[id]) || 0;
-        const price = parseFloat((base * (1 + updated / 100)).toFixed(2));
+        const price = computePriceUtil(base, updated);
         updates[id] = { t: now, price };
       }
       setHistoryById((prevHist) => {

@@ -11,7 +11,7 @@ npm install
 ```
 
 2. Configure Supabase for persistence:
-   - Copy `env.example` to `.env` (or `.env.local`) and fill values:
+   - Create a `.env.local` file in `nftTrader/` and set:
      - `VITE_SUPABASE_URL=...`
      - `VITE_SUPABASE_ANON_KEY=...`
    - In the Supabase SQL editor, run the SQL from `supabase/schema.sql` to create tables and policies.
@@ -20,15 +20,18 @@ npm install
 
 - `npm run dev`: start dev server
 - `npm run build`: build for production
+- `npm run test`: run unit tests
 
 ## Project Structure
 
-- `src/context/EconomyContext.jsx`: economy simulation (cumulative random ±10% every minute)
+- `src/context/EconomyContext.jsx`: economy simulation (Strategy pattern for deltas, 10s ticks)
 - `src/context/WalletContext.jsx`: wallet state and balance loader
 - `src/pages/Home.jsx`: lists sample NFTs
 - `src/pages/NFTValue.jsx`: shows live price for an NFT
 - `src/data/nfts.js`: sample NFTs and helpers
 - `src/lib/supabaseClient.js`: Supabase client (if env vars provided)
+- `src/lib/pricing.js`: pure price calculator used across the app
+- `src/lib/economyStrategies.js`: Strategy for economy delta generation (swappable)
 - `src/services/walletService.js`: wallet CRUD (balance, debit, credit)
 - `src/services/nftService.js`: NFT fetch, buy and sell
 
