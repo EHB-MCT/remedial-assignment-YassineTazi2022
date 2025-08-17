@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchNftById } from '../services/nftService.js';
 import { buyNft } from '../services/nftService.js';
 import { fetchMyPurchasedNftIds } from '../services/nftService.js';
+import { fetchMyPurchases } from '../services/nftService.js';
+import { sellPurchase } from '../services/nftService.js';
 import { useEconomy } from '../context/EconomyContext.jsx';
 import { useWallet } from '../context/WalletContext.jsx';
 
@@ -16,6 +18,9 @@ export default function NFTValue() {
   const [buying, setBuying] = useState(false);
   const [buyMessage, setBuyMessage] = useState('');
   const [owned, setOwned] = useState(false);
+  const [selling, setSelling] = useState(false);
+  const [sellMessage, setSellMessage] = useState('');
+  const [unsoldPurchaseId, setUnsoldPurchaseId] = useState(null);
   const { refreshBalance } = useWallet();
 
   useEffect(() => {
@@ -43,6 +48,19 @@ export default function NFTValue() {
       }
     }
     checkOwned();
+
+    // Resolve the user's unsold purchase id for this NFT, if any
+    async function resolveUnsoldPurchase() {
+      try {
+        const purchases = await fetchMyPurchases();
+        if (!isMounted) return;
+        const found = purchases.find((p) => p.nftId === nftId && !p.soldAt);
+        setUnsoldPurchaseId(found ? found.id : null);
+      } catch (_) {
+        if (isMounted) setUnsoldPurchaseId(null);
+      }
+    }
+    resolveUnsoldPurchase();
     return () => {
       isMounted = false;
     };
@@ -114,7 +132,7 @@ export default function NFTValue() {
         <div style={{ margin: '0.5rem 0' }}>
           <Chart points={history} />
         </div>
-        <div style={{ marginTop: '0.5rem' }}>
+        <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             className="button"
             disabled={buying || owned}
@@ -126,6 +144,12 @@ export default function NFTValue() {
                 await buyNft(nft.id, priceNow, { basePriceEur: nft.basePrice });
                 setBuyMessage('Purchase successful.');
                 setOwned(true);
+                // Attempt to find the new purchase id
+                try {
+                  const purchases = await fetchMyPurchases();
+                  const found = purchases.find((p) => p.nftId === nft.id && !p.soldAt);
+                  setUnsoldPurchaseId(found ? found.id : null);
+                } catch (_) {}
                 await refreshBalance();
               } catch (e) {
                 setBuyMessage(e.message || 'Purchase failed');
@@ -136,9 +160,37 @@ export default function NFTValue() {
           >
             {owned ? 'Already owned' : buying ? 'Buying…' : 'Buy at current price'}
           </button>
+          <button
+            className="button"
+            disabled={selling || !owned || !unsoldPurchaseId}
+            onClick={async () => {
+              setSellMessage('');
+              setSelling(true);
+              try {
+                const priceNow = computePrice(nft.id, nft.basePrice);
+                if (!unsoldPurchaseId) throw new Error('No purchase to sell');
+                await sellPurchase(unsoldPurchaseId, priceNow);
+                setSellMessage('Sold successfully.');
+                setOwned(false);
+                setUnsoldPurchaseId(null);
+                await refreshBalance();
+              } catch (e) {
+                setSellMessage(e.message || 'Sell failed');
+              } finally {
+                setSelling(false);
+              }
+            }}
+          >
+            {selling ? 'Selling…' : 'Sell at current price'}
+          </button>
           {buyMessage && (
             <p style={{ marginTop: '0.5rem', color: buyMessage.includes('successful') ? '#138a36' : '#cc2936' }}>
               {buyMessage}
+            </p>
+          )}
+          {sellMessage && (
+            <p style={{ marginTop: '0.5rem', color: sellMessage.includes('success') ? '#138a36' : '#cc2936' }}>
+              {sellMessage}
             </p>
           )}
         </div>
