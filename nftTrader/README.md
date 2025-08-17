@@ -45,3 +45,18 @@ npm install
 
 - Each signed-in user gets a wallet starting at € 300 (persisted in Supabase).
 - Buying an NFT debits the wallet; selling credits it. Ownership is tracked via `purchases` and `sales`.
+
+
+## References
+
+- React — Official Docs: `https://react.dev/`
+- Vite — Official Docs: `https://vitejs.dev/`
+- Supabase — JavaScript Client & RLS: `https://supabase.com/docs/reference/javascript`
+- React Router — Docs: `https://reactrouter.com/`
+- Vitest — Docs: `https://vitest.dev/`
+- GitHub Docs — Relative links in READMEs: `https://docs.github.com/articles/relative-links-in-readmes`
+- Project architecture (internal): [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+- Database schema (internal): [supabase/schema.sql](./supabase/schema.sql)
+
+- React + Supabase Quickstart (official): `https://supabase.com/docs/guides/getting-started/quickstarts/reactjs?utm_source=openai`
+- Supabase React + Vite example (GitHub): `https://github.com/MichaelZalla/supabase-react-vite-example?utm_source=openai`
